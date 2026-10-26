@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import {
   EXPENSE_CATEGORIES,
   INCOME_CATEGORIES,
   byCategory,
+  formatDay,
   formatIDR,
   formatMonth,
   monthOf,
@@ -13,21 +14,31 @@ import {
 
 const today = () => new Date().toISOString().slice(0, 10)
 const thisMonth = () => new Date().toISOString().slice(0, 7)
+const sign = (kind: Kind) => (kind === 'income' ? '+' : '−')
 
-function Bar({ label, value, max }: { label: string; value: number; max: number }) {
-  const pct = max > 0 ? (value / max) * 100 : 0
+function Bars({ data }: { data: [string, number][] }) {
+  const max = data[0]?.[1] ?? 0
   return (
-    <div className="bar-row">
-      <span title={label}>{label}</span>
-      <div
-        className="bar-track"
-        role="img"
-        aria-label={`${label}: ${formatIDR(value)}`}
-      >
-        <div className="bar-fill" style={{ width: `${pct}%` }} />
-      </div>
-      <span className="num">{formatIDR(value)}</span>
-    </div>
+    <ul className="bars">
+      {data.map(([cat, val]) => (
+        <li className="bar" key={cat}>
+          <span className="name" title={cat}>
+            {cat}
+          </span>
+          <div
+            className="track"
+            role="img"
+            aria-label={`${cat}: ${formatIDR(val)}`}
+          >
+            <div
+              className="fill"
+              style={{ width: `${max > 0 ? (val / max) * 100 : 0}%` }}
+            />
+          </div>
+          <span className="val">{formatIDR(val)}</span>
+        </li>
+      ))}
+    </ul>
   )
 }
 
@@ -35,10 +46,14 @@ export default function App() {
   const { txs, add, remove } = useTransactions()
   const [month, setMonth] = useState(thisMonth)
   const [kind, setKind] = useState<Kind>('expense')
-  const [category, setCategory] = useState('Makanan')
+  const [category, setCategory] = useState(EXPENSE_CATEGORIES[0])
   const [amount, setAmount] = useState('')
   const [date, setDate] = useState(today)
   const [note, setNote] = useState('')
+  const [error, setError] = useState('')
+  const [saved, setSaved] = useState('')
+  const amountRef = useRef<HTMLInputElement>(null)
+  const ids = { amount: useId(), date: useId(), cat: useId(), note: useId(), month: useId() }
 
   const categories = kind === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES
 
@@ -49,25 +64,43 @@ export default function App() {
         .sort((a, b) => b.date.localeCompare(a.date)),
     [txs, month],
   )
-
   const stats = useMemo(() => summarize(txs, month), [txs, month])
   const expenseByCat = useMemo(() => byCategory(txs, month, 'expense'), [txs, month])
-  const maxCat = expenseByCat.length ? expenseByCat[0][1] : 0
 
-  const monthsWithData = useMemo(() => {
+  const months = useMemo(() => {
     const s = new Set(txs.map((t) => monthOf(t.date)))
     s.add(thisMonth())
+    s.add(month)
     return [...s].sort().reverse()
-  }, [txs])
+  }, [txs, month])
+
+  useEffect(() => {
+    if (!saved) return
+    const t = setTimeout(() => setSaved(''), 3000)
+    return () => clearTimeout(t)
+  }, [saved])
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault()
     const value = Number(amount.replace(/[^\d]/g, ''))
-    if (!Number.isFinite(value) || value <= 0) return
+    if (!Number.isFinite(value) || value <= 0) {
+      setError('Nominal harus lebih dari 0.')
+      amountRef.current?.focus()
+      return
+    }
+    if (!date) {
+      setError('Tanggal wajib diisi.')
+      return
+    }
+    setError('')
     add({ date, kind, amount: value, category, note: note.trim() })
+    setSaved(
+      `${kind === 'income' ? 'Pemasukan' : 'Pengeluaran'} ${formatIDR(value)} tersimpan.`,
+    )
     setAmount('')
     setNote('')
     setMonth(monthOf(date))
+    amountRef.current?.focus()
   }
 
   const switchKind = (k: Kind) => {
@@ -76,44 +109,54 @@ export default function App() {
   }
 
   return (
-    <div className="app">
-      <header className="header">
-        <h1>Duit</h1>
-        <label className="field">
-          <span>Bulan</span>
-          <select value={month} onChange={(e) => setMonth(e.target.value)}>
-            {monthsWithData.map((m) => (
+    <main className="shell">
+      <header className="top">
+        <div>
+          <h1>Duit</h1>
+          <p className="sub">Catatan pemasukan dan pengeluaran. Tersimpan di perangkat ini.</p>
+        </div>
+        <div className="month-pick">
+          <label htmlFor={ids.month}>Bulan</label>
+          <select id={ids.month} value={month} onChange={(e) => setMonth(e.target.value)}>
+            {months.map((m) => (
               <option key={m} value={m}>
                 {formatMonth(m)}
               </option>
             ))}
           </select>
-        </label>
+        </div>
       </header>
 
-      <section className="summary" aria-label="Ringkasan bulan ini">
-        <div className="card stat">
-          <div className="label">Pemasukan</div>
-          <div className="value success">{formatIDR(stats.income)}</div>
-        </div>
-        <div className="card stat">
-          <div className="label">Pengeluaran</div>
-          <div className="value danger">{formatIDR(stats.expense)}</div>
-        </div>
-        <div className="card stat">
-          <div className="label">Saldo</div>
-          <div className={`value ${stats.balance >= 0 ? 'success' : 'danger'}`}>
-            {formatIDR(stats.balance)}
+      <section aria-labelledby="ringkasan">
+        <h2 id="ringkasan" className="sr-only">
+          Ringkasan {formatMonth(month)}
+        </h2>
+        <dl className="stats">
+          <div className="stat">
+            <dt>Pemasukan</dt>
+            <dd className="up">+{formatIDR(stats.income)}</dd>
           </div>
-        </div>
+          <div className="stat">
+            <dt>Pengeluaran</dt>
+            <dd className="down">−{formatIDR(stats.expense)}</dd>
+          </div>
+          <div className="stat">
+            <dt>Saldo</dt>
+            <dd className={stats.balance >= 0 ? 'up' : 'down'}>
+              {formatIDR(stats.balance)}
+            </dd>
+          </div>
+        </dl>
       </section>
 
-      <section className="card">
-        <h2>Tambah transaksi</h2>
-        <form className="tx" onSubmit={submit}>
+      <section className="card" aria-labelledby="tambah">
+        <h2 id="tambah">Tambah transaksi</h2>
+        <form className="form-grid" onSubmit={submit} noValidate>
           <div className="field">
-            <span>Jenis</span>
-            <div className="seg">
+            <span className="legend" id="jenis-label">
+              Jenis
+            </span>
+            <div className="seg" role="group" aria-labelledby="jenis-label">
               <button
                 type="button"
                 aria-pressed={kind === 'expense'}
@@ -131,98 +174,131 @@ export default function App() {
             </div>
           </div>
 
-          <label className="field">
-            <span>Nominal (Rp)</span>
+          <div className="field">
+            <label htmlFor={ids.amount}>Nominal (Rp)</label>
             <input
+              id={ids.amount}
+              ref={amountRef}
               inputMode="numeric"
+              autoComplete="off"
               placeholder="25000"
-              required
               value={amount}
+              aria-invalid={error ? true : undefined}
+              aria-describedby={error ? 'form-error' : undefined}
               onChange={(e) => setAmount(e.target.value)}
             />
-          </label>
+          </div>
 
-          <label className="field">
-            <span>Tanggal</span>
-            <input type="date" required value={date} onChange={(e) => setDate(e.target.value)} />
-          </label>
+          <div className="field">
+            <label htmlFor={ids.date}>Tanggal</label>
+            <input
+              id={ids.date}
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+            />
+          </div>
 
-          <label className="field">
-            <span>Kategori</span>
-            <select value={category} onChange={(e) => setCategory(e.target.value)}>
+          <div className="field">
+            <label htmlFor={ids.cat}>Kategori</label>
+            <select id={ids.cat} value={category} onChange={(e) => setCategory(e.target.value)}>
               {categories.map((c) => (
                 <option key={c} value={c}>
                   {c}
                 </option>
               ))}
             </select>
-          </label>
+          </div>
 
-          <label className="field wide">
-            <span>Catatan (opsional)</span>
+          <div className="field full">
+            <label htmlFor={ids.note}>
+              Catatan <span className="hint">(opsional)</span>
+            </label>
             <input
+              id={ids.note}
               placeholder="mis. makan siang"
               value={note}
               onChange={(e) => setNote(e.target.value)}
             />
-          </label>
+          </div>
 
-          <div className="field wide">
+          <div className="actions">
             <button className="btn" type="submit">
               Simpan
             </button>
+            {error && (
+              <p className="status" id="form-error" role="alert" style={{ color: 'var(--expense)' }}>
+                {error}
+              </p>
+            )}
           </div>
         </form>
+        <p className="status" role="status">
+          {saved}
+        </p>
       </section>
 
-      <section className="card">
-        <h2>Pengeluaran per kategori</h2>
+      <section className="card" aria-labelledby="kategori">
+        <div className="section-head">
+          <h2 id="kategori">Pengeluaran per kategori</h2>
+        </div>
         {expenseByCat.length === 0 ? (
           <p className="empty">Belum ada pengeluaran bulan ini.</p>
         ) : (
-          <div className="chart">
-            {expenseByCat.map(([cat, val]) => (
-              <Bar key={cat} label={cat} value={val} max={maxCat} />
-            ))}
-          </div>
+          <Bars data={expenseByCat} />
         )}
       </section>
 
-      <section className="card">
-        <h2>Transaksi</h2>
+      <section className="card" aria-labelledby="daftar">
+        <div className="section-head">
+          <h2 id="daftar">Transaksi</h2>
+          <span className="count">
+            {monthTxs.length} transaksi · {formatMonth(month)}
+          </span>
+        </div>
         {monthTxs.length === 0 ? (
-          <p className="empty">Belum ada transaksi.</p>
+          <p className="empty">Belum ada transaksi bulan ini.</p>
         ) : (
-          <ul className="tx-list">
+          <ul className="list">
             {monthTxs.map((t) => (
-              <li className="tx-item" key={t.id}>
-                <div>
-                  <div>{t.category}</div>
+              <li className="row" key={t.id}>
+                <div className="who">
+                  <div className="cat">{t.category}</div>
                   <div className="meta">
-                    {new Date(`${t.date}T00:00:00`).toLocaleDateString('id-ID', {
-                      day: 'numeric',
-                      month: 'short',
-                    })}
+                    {formatDay(t.date)}
                     {t.note ? ` · ${t.note}` : ''}
                   </div>
                 </div>
-                <span className={`amount ${t.kind}`}>
-                  {t.kind === 'income' ? '+' : '−'}
+                <span className={`amt ${t.kind === 'income' ? 'in' : 'out'}`}>
+                  <span className="tag">
+                    {t.kind === 'income' ? 'masuk' : 'keluar'}
+                  </span>
+                  {sign(t.kind)}
                   {formatIDR(t.amount)}
                 </span>
                 <button
                   className="icon-btn"
                   type="button"
-                  aria-label={`Hapus ${t.category} ${formatIDR(t.amount)}`}
-                  onClick={() => remove(t.id)}
+                  aria-label={`Hapus ${t.category} ${formatIDR(t.amount)} tanggal ${formatDay(t.date)}`}
+                  onClick={() => {
+                    remove(t.id)
+                    setSaved(`Transaksi ${t.category} dihapus.`)
+                  }}
                 >
-                  ✕
+                  <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                    <path
+                      d="M4 4l8 8M12 4l-8 8"
+                      stroke="currentColor"
+                      strokeWidth="1.6"
+                      strokeLinecap="round"
+                    />
+                  </svg>
                 </button>
               </li>
             ))}
           </ul>
         )}
       </section>
-    </div>
+    </main>
   )
 }

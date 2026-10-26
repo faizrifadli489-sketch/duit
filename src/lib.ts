@@ -61,6 +61,13 @@ export const formatMonth = (ym: string) =>
     year: 'numeric',
   })
 
+export const formatDay = (date: string) =>
+  new Date(`${date}T00:00:00`).toLocaleDateString('id-ID', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  })
+
 export function summarize(txs: Tx[], month: string) {
   let income = 0
   let expense = 0
