@@ -45,7 +45,7 @@ export const INCOME_CATEGORIES = [
   'Gaji', 'Bonus', 'Freelance', 'Investasi', 'Hadiah', 'Penjualan', 'Lainnya',
 ]
 export const WALLET_COLORS = [
-  '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316',
+  '#ffffff', '#d4d4d4', '#a3a3a3', '#737373', '#525252', '#e5e5e5', '#c0c0c0', '#8f8f8f',
 ]
 
 // ── Utilities ──────────────────────────────────────────────────────────

@@ -1,24 +1,24 @@
 /* KoinKu - Precision Instrument / Tactical Terminal */
 :root {
   color-scheme: dark;
-  --bg: #0d0f12;
-  --bg2: #14171d;
-  --paper: #1a1f26;
-  --fill: #222a35;
-  --fill-h: #2b3542;
-  --line: #262c36;
-  --line2: #39424f;
-  --text: #e6edf3;
-  --text2: #aab3c0;
-  --text3: #7d8590;
-  --accent: #06b6d4;
-  --accent-h: #22d3ee;
-  --accent-soft: #0e3540;
-  --income: #10b981;
-  --income-soft: #07332a;
-  --expense: #f59e0b;
-  --expense-soft: #4a2d08;
-  --danger: #ef4444;
+  --bg: #000000;
+  --bg2: #0a0a0a;
+  --paper: #111111;
+  --fill: #1a1a1a;
+  --fill-h: #242424;
+  --line: #222222;
+  --line2: #3a3a3a;
+  --text: #ffffff;
+  --text2: #d4d4d4;
+  --text3: #8f8f8f;
+  --accent: #ffffff;
+  --accent-h: #e5e5e5;
+  --accent-soft: #1f1f1f;
+  --income: #ffffff;
+  --income-soft: #1f1f1f;
+  --expense: #8f8f8f;
+  --expense-soft: #1f1f1f;
+  --danger: #ffffff;
   --r-s: 6px; --r-m: 8px; --r-l: 12px;
   --e: cubic-bezier(.2,0,0,1);
 }
@@ -35,7 +35,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .app{display:flex;min-height:100vh}
 .sidebar{width:224px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--line);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:50}
 .brand{padding:20px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
-.brand .mark{width:30px;height:30px;border-radius:7px;background:linear-gradient(135deg,var(--accent),var(--income));display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:#04121a}
+.brand .mark{width:30px;height:30px;border-radius:7px;background:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:#000}
 .brand b{font-size:17px;letter-spacing:-.02em}
 .brand small{display:block;font-size:10px;color:var(--text3);font-family:ui-monospace,monospace;letter-spacing:.1em}
 .nav{flex:1;padding:12px;display:flex;flex-direction:column;gap:2px;overflow:auto}
@@ -64,8 +64,8 @@ button,input,select,textarea{font:inherit;color:inherit}
 .topbar-m button.on{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:9px 16px;min-height:38px;border:1px solid transparent;border-radius:8px;font-weight:600;font-size:13px;cursor:pointer;transition:all 120ms var(--e);white-space:nowrap;background:var(--fill);color:var(--text)}
 .btn:hover{background:var(--fill-h)}
-.btn-pri{background:var(--accent);color:#03161b}
-.btn-pri:hover{background:var(--accent-h)}
+.btn-pri{background:#fff;color:#000}
+.btn-pri:hover{background:#d4d4d4}
 .btn:active{transform:scale(.97)}
 .btn:disabled{opacity:.45;cursor:not-allowed}
 .btn:focus-visible,.icon-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
@@ -93,8 +93,8 @@ input::placeholder{color:var(--text3)}
 .trow:last-child{border-bottom:0;padding-bottom:0}
 .trow:first-child{padding-top:0}
 .tico{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px;font-weight:700}
-.tico.in{background:var(--income-soft);color:var(--income)}
-.tico.out{background:var(--expense-soft);color:var(--expense)}
+.tico.in{background:#fff;color:#000}
+.tico.out{background:transparent;border:1px solid var(--line2);color:var(--text2)}
 .tinfo{flex:1;min-width:0}
 .tcat{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tmeta{font-size:12px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -120,7 +120,7 @@ input::placeholder{color:var(--text3)}
 .scard .sn{font-weight:650;font-size:15px}
 .scard .sd{font-size:12px;color:var(--text3)}
 .prog{height:10px;background:var(--fill);border-radius:99px;overflow:hidden;margin:10px 0 6px}
-.prog>div{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--accent),var(--income));transition:width 400ms var(--e)}
+.prog>div{height:100%;border-radius:99px;background:#fff;transition:width 400ms var(--e)}
 .smeta{display:flex;justify-content:space-between;font-size:12px;color:var(--text2);font-variant-numeric:tabular-nums}
 .smeta b{color:var(--text)}
 .sact{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
@@ -147,7 +147,7 @@ input::placeholder{color:var(--text3)}
 .modal .msub{font-size:13px;color:var(--text3);margin-bottom:16px}
 .modal .mact{display:flex;gap:10px;justify-content:flex-end;margin-top:18px}
 .toasts{position:fixed;bottom:20px;right:20px;z-index:300;display:flex;flex-direction:column;gap:8px}
-.toast{background:var(--paper);border:1px solid var(--line2);border-left:3px solid var(--income);border-radius:8px;padding:12px 16px;font-size:13px;max-width:320px;animation:tin 200ms var(--e)}
+.toast{background:var(--paper);border:1px solid var(--line2);border-left:3px solid #fff;border-radius:8px;padding:12px 16px;font-size:13px;max-width:320px;animation:tin 200ms var(--e)}
 .toast.err{border-left-color:var(--danger)}
 @keyframes tin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 .kbd{font-family:ui-monospace,monospace;font-size:11px;background:var(--fill);border:1px solid var(--line2);border-bottom-width:2px;border-radius:5px;padding:1px 6px;color:var(--text2)}

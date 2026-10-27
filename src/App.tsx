@@ -517,8 +517,8 @@ function POS({ wallets, onSale }: { wallets: Wallet[]; onSale: (t: Omit<Tx, 'id'
             </div>
             <div className="fld" style={{ marginBottom: 12 }}><label>Catatan <span className="hint">(opsional)</span></label><input placeholder="mis. shift pagi" value={note} onChange={(e) => setNote(e.target.value)} /></div>
             <div style={{ display: 'flex', gap: 8 }}>
-              <button className="btn btn-inc" style={{ flex: 1, background: 'var(--income)', color: '#03170f' }} onClick={() => checkout('income')} disabled={!total && !cur}>Jual · {formatIDR(total + cur)}</button>
-              <button className="btn" style={{ flex: 1, background: 'var(--expense)', color: '#241300' }} onClick={() => checkout('expense')} disabled={!total && !cur}>Beli</button>
+              <button className="btn btn-pri" style={{ flex: 1 }} onClick={() => checkout('income')} disabled={!total && !cur}>Jual · {formatIDR(total + cur)}</button>
+              <button className="btn btn-sec" style={{ flex: 1 }} onClick={() => checkout('expense')} disabled={!total && !cur}>Beli</button>
             </div>
           </div>
         </div>
